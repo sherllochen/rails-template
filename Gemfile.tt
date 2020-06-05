@@ -22,6 +22,9 @@ gem "turbolinks"<%= gemfile_requirement("turbolinks") %>
 <% end -%>
 gem "webpacker"<%= gemfile_requirement("webpacker") %>
 
+gem 'devise', '~> 4.7', '>= 4.7.0'
+gem 'devise_masquerade', '~> 1.2'
+
 group :production do
   gem "postmark-rails"
 end
@@ -33,7 +36,7 @@ group :development do
   gem "binding_of_caller"
   gem "guard", ">= 2.2.2", require: false
   gem "guard-livereload", require: false
-  gem "guard-minitest", require: false
+  #gem "guard-minitest", require: false
   gem "letter_opener"
   gem "listen"<%= gemfile_requirement("listen") %>
   gem "rack-livereload"
@@ -54,7 +57,7 @@ group :development, :test do
   gem "byebug"
   gem "overcommit", ">= 0.37.0", require: false
   gem "rubocop", ">= 0.84.0", require: false
-  gem "rubocop-minitest", require: false
+  #gem "rubocop-minitest", require: false
   gem "rubocop-performance", require: false
   gem "rubocop-rails", require: false
 end
@@ -62,7 +65,7 @@ end
 group :test do
   gem "capybara"<%= gemfile_requirement("capybara") %>
   gem "launchy"
-  gem "minitest-ci", ">= 3.3.0", require: false
+  #gem "minitest-ci", ">= 3.3.0", require: false
   gem "mock_redis"
   gem "selenium-webdriver"
   gem "shoulda-context"

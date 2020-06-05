@@ -1,3 +1,7 @@
+If you use postgresql, than set host and username to postgre. 
+
+---
+# ORIGIN README
 # mattbrictson/rails-template
 
 [![Circle](https://circleci.com/gh/mattbrictson/rails-template.svg?style=shield)](https://app.circleci.com/pipelines/github/mattbrictson/rails-template?branch=master)
@@ -45,7 +49,7 @@ This template assumes you will store your project in a remote git repository (e.
 To generate a Rails application using this template, pass the `-m` option to `rails new`, like this:
 
 ```
-rails new blog \
+rails new blog -T\
   -d postgresql \
   -m https://raw.githubusercontent.com/mattbrictson/rails-template/master/template.rb
 ```

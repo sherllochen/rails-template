@@ -3,16 +3,19 @@
 def setup!
   within_project_root do
     test "ruby -v" => ruby_version
-    run  "gem install bundler #{bundler_ver_arg} --no-document --conservative"
-    run  "bundle install"
-    run  "bin/yarn install" if File.exist?("yarn.lock")
-    run  "bundle exec overcommit --install"
+    run "gem install bundler #{bundler_ver_arg} --no-document --conservative"
+    run "bundle install"
+    # start to customize here
+    #
+    # end
+    run "bin/yarn install" if File.exist?("yarn.lock")
+    run "bundle exec overcommit --install"
     copy "example.env"
     test_local_env_contains_required_keys
-    run  "bin/rake tmp:create"
-    run  "bin/rake db:create:all"
-    run  "bin/rake db:migrate"
-    run  "bin/rake db:seed"
+    run "bin/rake tmp:create"
+    run "bin/rake db:create"
+    run "bin/rake db:migrate"
+    run "bin/rake db:seed"
   end
 end
 
@@ -74,7 +77,7 @@ def copy(example_path)
 end
 
 def test_local_env_contains_required_keys
-  keys = ->(f) { IO.readlines(f).map { |l| l[/^([^#\s][^=\s]*)/, 1] }.compact }
+  keys = ->(f) {IO.readlines(f).map {|l| l[/^([^#\s][^=\s]*)/, 1]}.compact}
 
   log(:yellow, "test .env contents") do
     missing = keys["example.env"] - keys[".env"]
@@ -84,9 +87,9 @@ def test_local_env_contains_required_keys
   end
 end
 
-def log(color, message, out=$stdout, &block)
+def log(color, message, out = $stdout, &block)
   if defined?(HighLine::String)
-    message.sub!(/^(\S*)/) { HighLine::String.new($1).public_send(color) }
+    message.sub!(/^(\S*)/) {HighLine::String.new($1).public_send(color)}
   end
 
   if block_given?

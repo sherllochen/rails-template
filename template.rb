@@ -36,6 +36,7 @@ def apply_template!
   empty_directory ".git/safe"
 
   run_with_clean_bundler_env "bin/setup"
+  setup_gems
   run_with_clean_bundler_env "bin/rails webpacker:install"
   create_initial_migration
   generate_spring_binstubs
@@ -74,24 +75,27 @@ def add_template_repository_to_source_path
   if __FILE__ =~ %r{\Ahttps?://}
     require "tmpdir"
     source_paths.unshift(tempdir = Dir.mktmpdir("rails-template-"))
-    at_exit { FileUtils.remove_entry(tempdir) }
+    at_exit {FileUtils.remove_entry(tempdir)}
     git clone: [
-      "--quiet",
-      "https://github.com/mattbrictson/rails-template.git",
-      tempdir
+        "--quiet",
+        "https://github.com/mattbrictson/rails-template.git",
+        tempdir
     ].map(&:shellescape).join(" ")
 
     if (branch = __FILE__[%r{rails-template/(.+)/template.rb}, 1])
-      Dir.chdir(tempdir) { git checkout: branch }
+      Dir.chdir(tempdir) {git checkout: branch}
     end
   else
     source_paths.unshift(File.dirname(__FILE__))
   end
 end
 
+def rails_version
+  @rails_version ||= Gem::Version.new(Rails::VERSION::STRING)
+end
+
 def assert_minimum_rails_version
   requirement = Gem::Requirement.new(RAILS_REQUIREMENT)
-  rails_version = Gem::Version.new(Rails::VERSION::STRING)
   return if requirement.satisfied_by?(rails_version)
 
   prompt = "This template requires Rails #{RAILS_REQUIREMENT}. "\
@@ -102,13 +106,13 @@ end
 # Bail out if user has passed in contradictory generator options.
 def assert_valid_options
   valid_options = {
-    skip_gemfile: false,
-    skip_bundle: false,
-    skip_git: false,
-    skip_system_test: false,
-    skip_test: false,
-    skip_test_unit: false,
-    edge: false
+      skip_gemfile: false,
+      skip_bundle: false,
+      skip_git: false,
+      skip_system_test: false,
+      # skip_test: false,
+      # skip_test_unit: false,
+      edge: false
   }
   valid_options.each do |key, expected|
     next unless options.key?(key)
@@ -126,12 +130,12 @@ end
 
 def git_repo_url
   @git_repo_url ||=
-    ask_with_default("What is the git remote URL for this project?", :blue, "skip")
+      ask_with_default("What is the git remote URL for this project?", :blue, "skip")
 end
 
 def production_hostname
   @production_hostname ||=
-    ask_with_default("Production hostname?", :blue, "example.com")
+      ask_with_default("Production hostname?", :blue, "example.com")
 end
 
 def gemfile_requirement(name)
@@ -163,9 +167,9 @@ end
 def run_with_clean_bundler_env(cmd)
   success = if defined?(Bundler)
               if Bundler.respond_to?(:with_unbundled_env)
-                Bundler.with_unbundled_env { run(cmd) }
+                Bundler.with_unbundled_env {run(cmd)}
               else
-                Bundler.with_clean_env { run(cmd) }
+                Bundler.with_clean_env {run(cmd)}
               end
             else
               run(cmd)
@@ -206,10 +210,77 @@ def add_package_json_script(scripts)
     package_json["scripts"][name.to_s] = script
   end
   package_json = {
-    "name" => package_json["name"],
-    "scripts" => package_json["scripts"].sort.to_h
+      "name" => package_json["name"],
+      "scripts" => package_json["scripts"].sort.to_h
   }.merge(package_json)
   IO.write("package.json", JSON.pretty_generate(package_json) + "\n")
+end
+
+def setup_gems
+  run "bundle install"
+
+  add_users
+end
+
+def add_users
+  # Install Devise
+  generate "devise:install"
+
+  # Configure Devise
+  environment "config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }",
+              env: 'development'
+
+  # Create Devise User
+  generate :devise, "User",
+           "name"
+
+  # add unique phone column
+  generate 'migration add_phone_to_users phone:string:uniq'
+
+  copy_file "app/models/user.rb", force: true
+  copy_file "config/initializers/devise.rb", force: true
+end
+
+def add_javascript
+  run "yarn add expose-loader jquery popper.js bootstrap data-confirm-modal local-time"
+
+  if rails_5?
+    run "yarn add turbolinks @rails/actioncable@pre @rails/actiontext@pre @rails/activestorage@pre @rails/ujs@pre"
+  end
+
+  content = <<-JS
+const webpack = require('webpack')
+environment.plugins.append('Provide', new webpack.ProvidePlugin({
+  $: 'jquery',
+  jQuery: 'jquery',
+  Rails: '@rails/ujs'
+}))
+  JS
+
+  insert_into_file 'config/webpack/environment.js', content + "\n", before: "module.exports = environment"
+end
+
+def add_sidekiq
+  environment "config.active_job.queue_adapter = :sidekiq"
+
+  insert_into_file "config/routes.rb",
+                   "require 'sidekiq/web'\n\n",
+                   before: "Rails.application.routes.draw do"
+
+  content = <<-RUBY
+    authenticate :user, lambda { |u| u.admin? } do
+      mount Sidekiq::Web => '/sidekiq'
+    end
+  RUBY
+  insert_into_file "config/routes.rb", "#{content}\n\n", after: "Rails.application.routes.draw do\n"
+end
+
+def add_whenever
+  run "wheneverize ."
+end
+
+def add_sitemap
+  rails_command "sitemap:install"
 end
 
 apply_template!
