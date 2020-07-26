@@ -12,10 +12,10 @@ def setup!
     run "bundle exec overcommit --install"
     copy "example.env"
     test_local_env_contains_required_keys
-    run "bin/rake tmp:create"
-    run "bin/rake db:create"
-    run "bin/rake db:migrate"
-    run "bin/rake db:seed"
+    # run "bin/rake tmp:create"
+    # run "bin/rake db:create"
+    # run "bin/rake db:migrate"
+    # run "bin/rake db:seed"
   end
 end
 

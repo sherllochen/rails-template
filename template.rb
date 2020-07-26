@@ -2,6 +2,7 @@ require "bundler"
 require "json"
 RAILS_REQUIREMENT = "~> 6.0.0".freeze
 
+# 总入口
 def apply_template!
   assert_minimum_rails_version
   assert_valid_options
@@ -43,7 +44,7 @@ def apply_template!
 
   binstubs = %w[
     annotate brakeman bundler bundler-audit guard rubocop sidekiq
-    terminal-notifier
+    terminal-notifier rspec-core
   ]
   run_with_clean_bundler_env "bundle binstubs #{binstubs.join(' ')} --force"
 
@@ -216,10 +217,13 @@ def add_package_json_script(scripts)
   IO.write("package.json", JSON.pretty_generate(package_json) + "\n")
 end
 
+# 基础Gem配置
 def setup_gems
+  # run_with_clean_bundler_env "bundle install"
   run "bundle install"
 
   add_users
+  add_rspec
 end
 
 def add_users
@@ -239,6 +243,16 @@ def add_users
 
   copy_file "app/models/user.rb", force: true
   copy_file "config/initializers/devise.rb", force: true
+end
+
+def add_rspec
+  generate "rspec:install"
+  copy_file ".rspec", force: true
+  copy_file "spec/rails_helper.rb", force: true
+  copy_file "spec/spec_helper.rb", force: true
+  copy_file "spec/support/feature_helper.rb"
+  copy_file "spec/support/global_helper.rb"
+  copy_file "spec/support/request_helper.rb"
 end
 
 def add_javascript
