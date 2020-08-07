@@ -1,17 +1,18 @@
 #!/usr/bin/env ruby
-
 def setup!
   within_project_root do
+    puts "Base setup start..."
     test "ruby -v" => ruby_version
     run "gem install bundler #{bundler_ver_arg} --no-document --conservative"
     run "bundle install"
-    # start to customize here
-    #
-    # end
-    run "bin/yarn install" if File.exist?("yarn.lock")
-    run "bundle exec overcommit --install"
     copy "example.env"
     test_local_env_contains_required_keys
+    puts "Base setup done."
+    # 移到template执行
+    # run "bin/yarn install" if File.exist?("yarn.lock")
+    # run "bundle exec overcommit --install"
+    # copy "example.env"
+    # test_local_env_contains_required_keys
     # run "bin/rake tmp:create"
     # run "bin/rake db:create"
     # run "bin/rake db:migrate"
@@ -20,6 +21,7 @@ def setup!
 end
 
 require "fileutils"
+require "shellwords"
 begin
   require "highline"
 rescue LoadError
@@ -76,17 +78,6 @@ def copy(example_path)
   end
 end
 
-def test_local_env_contains_required_keys
-  keys = ->(f) {IO.readlines(f).map {|l| l[/^([^#\s][^=\s]*)/, 1]}.compact}
-
-  log(:yellow, "test .env contents") do
-    missing = keys["example.env"] - keys[".env"]
-    if missing.any?
-      die("Your .env file is missing #{missing.join(', ')}")
-    end
-  end
-end
-
 def log(color, message, out = $stdout, &block)
   if defined?(HighLine::String)
     message.sub!(/^(\S*)/) {HighLine::String.new($1).public_send(color)}
@@ -105,6 +96,17 @@ def die(message)
   puts
   log(:red, "FAIL #{message}", $stderr)
   exit(1)
+end
+
+def test_local_env_contains_required_keys
+  keys = ->(f) {IO.readlines(f).map {|l| l[/^([^#\s][^=\s]*)/, 1]}.compact}
+
+  log(:yellow, "test .env contents") do
+    missing = keys["example.env"] - keys[".env"]
+    if missing.any?
+      die("Your .env file is missing #{missing.join(', ')}")
+    end
+  end
 end
 
 setup!

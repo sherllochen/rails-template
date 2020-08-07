@@ -1,5 +1,6 @@
 require "bundler"
 require "json"
+require "shellwords"
 RAILS_REQUIREMENT = "~> 6.0.0".freeze
 
 # 总入口
@@ -38,7 +39,10 @@ def apply_template!
 
   run_with_clean_bundler_env "bin/setup"
   setup_gems
-  run_with_clean_bundler_env "bin/rails webpacker:install"
+
+  after_setup
+
+  # run_with_clean_bundler_env "bin/rails webpacker:install"
   create_initial_migration
   generate_spring_binstubs
 
@@ -56,12 +60,14 @@ def apply_template!
   add_eslint_and_run_fix
 
   unless any_local_git_commits?
+    say 'Git processing...'
     git add: "-A ."
     git commit: "-n -m 'Set up project'"
     if git_repo_specified?
       git remote: "add origin #{git_repo_url.shellescape}"
       git push: "-u origin --all"
     end
+    say 'Git done.'
   end
 end
 
@@ -192,6 +198,7 @@ def create_initial_migration
 end
 
 def add_eslint_and_run_fix
+  say 'add_eslint_and_run_fix'
   packages = %w[
     babel-eslint
     eslint
@@ -221,12 +228,12 @@ end
 def setup_gems
   # run_with_clean_bundler_env "bundle install"
   run "bundle install"
-
   add_users
   add_rspec
 end
 
 def add_users
+  say "Add Devise start...", :green
   # Install Devise
   generate "devise:install"
 
@@ -234,18 +241,21 @@ def add_users
   environment "config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }",
               env: 'development'
 
+  # generate :model, "User", "name:string"
+
   # Create Devise User
-  generate :devise, "User",
-           "name"
+  generate :devise, "User", 'name'
 
   # add unique phone column
   generate 'migration add_phone_to_users phone:string:uniq'
 
   copy_file "app/models/user.rb", force: true
   copy_file "config/initializers/devise.rb", force: true
+  say "Add Devise successfully", :green
 end
 
 def add_rspec
+  say "Add Rspec start...", :green
   generate "rspec:install"
   copy_file ".rspec", force: true
   copy_file "spec/rails_helper.rb", force: true
@@ -253,6 +263,7 @@ def add_rspec
   copy_file "spec/support/feature_helper.rb"
   copy_file "spec/support/global_helper.rb"
   copy_file "spec/support/request_helper.rb"
+  say "Add Rspec successfully", :green
 end
 
 def add_javascript
@@ -295,6 +306,15 @@ end
 
 def add_sitemap
   rails_command "sitemap:install"
+end
+
+def after_setup
+  run "bin/yarn install" if File.exist?("yarn.lock")
+  run "bundle exec overcommit --install"
+  run "bin/rake tmp:create"
+  run "bin/rake db:create"
+  run "bin/rake db:migrate"
+  run "bin/rake db:seed"
 end
 
 apply_template!

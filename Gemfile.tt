@@ -24,6 +24,7 @@ gem "webpacker"<%= gemfile_requirement("webpacker") %>
 
 gem 'devise', '~> 4.7', '>= 4.7.0'
 gem 'devise_masquerade', '~> 1.2'
+gem 'pundit'
 
 gem 'seed-fu', '~> 2.3'
 
@@ -38,7 +39,6 @@ group :development do
   gem "binding_of_caller"
   gem "guard", ">= 2.2.2", require: false
   gem "guard-livereload", require: false
-  #gem "guard-minitest", require: false
   gem "letter_opener"
   gem "listen"<%= gemfile_requirement("listen") %>
   gem "rack-livereload"
@@ -59,16 +59,14 @@ group :development, :test do
   gem "byebug"
   gem "overcommit", ">= 0.37.0", require: false
   gem "rubocop", ">= 0.84.0", require: false
-  #gem "rubocop-minitest", require: false
   gem "rubocop-performance", require: false
   gem "rubocop-rails", require: false
-  %w[rspec-core rspec-expectations rspec-mocks rspec-rails rspec-support].each do |lib|
-    gem lib, git: "https://github.com/rspec/#{lib}.git", branch: 'master' # Previously '4-0-dev' or '4-0-maintenance' branch
-  end
+  gem 'rspec-rails', '~> 4.0.1'
 end
 
 group :test do
   gem "capybara"<%= gemfile_requirement("capybara") %>
+  gem "capybara-screenshot"
   gem "database_cleaner"
   gem "launchy"
   #gem "minitest-ci", ">= 3.3.0", require: false
@@ -76,6 +74,7 @@ group :test do
   gem "selenium-webdriver"
   gem "shoulda-context"
   gem "shoulda-matchers", ">= 3.0.1"
+  gem 'pundit-matchers', '~> 1.6.0'
   gem "webdrivers"
   gem 'factory_bot_rails'
 end

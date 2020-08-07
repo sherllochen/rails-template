@@ -10,9 +10,11 @@ require 'devise'
 require 'capybara'
 require 'capybara/rspec'
 require 'capybara-screenshot/rspec'
+require 'database_cleaner'
 require 'selenium/webdriver'
 require 'pundit/rspec'
 require 'pundit/matchers'
+require 'shoulda/matchers'
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
@@ -27,7 +29,7 @@ require 'pundit/matchers'
 # directory. Alternatively, in the individual `*_spec.rb` files, manually
 # require only the support files necessary.
 #
-# Dir[Rails.root.join('spec', 'support', '**', '*.rb')].sort.each { |f| require f }
+Dir[Rails.root.join('spec', 'support', '**', '*.rb')].sort.each { |f| require f }
 
 # Checks for pending migrations and applies them before tests are run.
 # If you are not using ActiveRecord, you can remove these lines.
@@ -37,6 +39,8 @@ rescue ActiveRecord::PendingMigrationError => e
   puts e.to_s.strip
   exit 1
 end
+
+
 RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_path = "#{::Rails.root}/spec/fixtures"
@@ -45,12 +49,12 @@ RSpec.configure do |config|
   # examples within a transaction, remove the following line or assign false
   # instead of true.
   # config.use_transactional_fixtures = true
-  config.use_transactional_fixtures = false
-
   # for data_cleaner
   config.use_transactional_fixtures = false
   # can add table names for seed data, and it will not be clean in every test.
   seed_tables = %w()
+
+  DatabaseCleaner.allow_remote_database_url = true
   config.before(:suite) do
     SeedFu.quiet = true
     # 全部迁移到每个spec内 自定预载入数据
