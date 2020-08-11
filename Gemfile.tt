@@ -26,7 +26,12 @@ gem 'devise', '~> 4.7', '>= 4.7.0'
 gem 'devise_masquerade', '~> 1.2'
 gem 'pundit'
 
+gem 'active_model_serializers'
 gem 'seed-fu', '~> 2.3'
+gem 'rucaptcha'
+gem "kaminari"
+
+gem "rswag"
 
 group :production do
   gem "postmark-rails"
@@ -51,17 +56,22 @@ group :development do
 <% unless gemfile_requirement("puma") -%>
   gem "thin", require: false
 <% end -%>
+  gem "bullet"
 end
 
 group :development, :test do
   gem "brakeman", require: false
   gem "bundler-audit", ">= 0.5.0", require: false
   gem "byebug"
+  gem "pry"
+  gem "pry-nav"
+  gem "faker"
   gem "overcommit", ">= 0.37.0", require: false
   gem "rubocop", ">= 0.84.0", require: false
   gem "rubocop-performance", require: false
   gem "rubocop-rails", require: false
-  gem 'rspec-rails', '~> 4.0.1'
+  gem "rspec-rails", "~> 4.0.1"
+  gem "rspec-retry"
 end
 
 group :test do
@@ -74,7 +84,8 @@ group :test do
   gem "selenium-webdriver"
   gem "shoulda-context"
   gem "shoulda-matchers", ">= 3.0.1"
-  gem 'pundit-matchers', '~> 1.6.0'
+  gem "pundit-matchers", "~> 1.6.0"
   gem "webdrivers"
-  gem 'factory_bot_rails'
+  gem "factory_bot_rails"
+  gem "rspec-sidekiq"
 end

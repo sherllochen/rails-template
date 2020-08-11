@@ -1,5 +1,6 @@
 require "bundler"
 require "json"
+require "fileutils"
 require "shellwords"
 RAILS_REQUIREMENT = "~> 6.0.0".freeze
 
@@ -58,6 +59,10 @@ def apply_template!
   template "eslintrc.js", ".eslintrc.js"
   template "prettierrc.js", ".prettierrc.js"
   add_eslint_and_run_fix
+  add_sidekiq
+  add_whenever
+  add_sitemap
+  add_javascript
 
   unless any_local_git_commits?
     say 'Git processing...'
@@ -71,8 +76,6 @@ def apply_template!
   end
 end
 
-require "fileutils"
-require "shellwords"
 
 # Add this template directory to source_paths so that Thor actions like
 # copy_file and template resolve against our source files. If this file was
@@ -85,7 +88,7 @@ def add_template_repository_to_source_path
     at_exit {FileUtils.remove_entry(tempdir)}
     git clone: [
         "--quiet",
-        "https://github.com/mattbrictson/rails-template.git",
+        "https://github.com/sherllochen/rails-template.git",
         tempdir
     ].map(&:shellescape).join(" ")
 
@@ -230,6 +233,9 @@ def setup_gems
   run "bundle install"
   add_users
   add_rspec
+  add_rswag
+  add_bullet
+  add_rucaptcha
 end
 
 def add_users
@@ -266,7 +272,52 @@ def add_rspec
   say "Add Rspec successfully", :green
 end
 
+def add_rswag
+  say "Add Rswag start...", :green
+  generate "rswag:install"
+  copy_file "lib/rswag_ui_csp.rb", force: true
+  append_to_file "config/application.rb" do
+    "require 'rswag_ui_csp'"
+  end
+  say "Add Rswag done", :green
+end
+
+def add_bullet
+  insert_into_file "config/environments/development.rb", after: "Rails.application.configure do\n" do
+    <<-'RUBY'
+    # Bullet
+    config.after_initialize do
+      Bullet.enable = true
+      # Bullet.sentry = true
+      Bullet.alert = true
+      Bullet.bullet_logger = true
+      Bullet.console = true
+      # Bullet.growl = true
+      # Bullet.xmpp = { :account  => 'bullets_account@jabber.org',
+      #                 :password => 'bullets_password_for_jabber',
+      #                 :receiver => 'your_account@jabber.org',
+      #                 :show_online_status => true }
+      Bullet.rails_logger = true
+      # Bullet.honeybadger = true
+      # Bullet.bugsnag = true
+      # Bullet.airbrake = true
+      # Bullet.rollbar = true
+      Bullet.add_footer = true
+      Bullet.skip_html_injection = false
+      # Bullet.stacktrace_includes = [ 'your_gem', 'your_middleware' ]
+      # Bullet.stacktrace_excludes = [ 'their_gem', 'their_middleware', ['my_file.rb', 'my_method'], ['my_file.rb', 16..20] ]
+      # Bullet.slack = { webhook_url: 'http://some.slack.url', channel: '#default', username: 'notifier' }
+    end
+    RUBY
+  end
+end
+
+def add_rucaptcha
+  copy_file "config/initializers/rucaptcha.rb"
+end
+
 def add_javascript
+  say 'Add javascript'
   run "yarn add expose-loader jquery popper.js bootstrap data-confirm-modal local-time"
 
   if rails_5?
@@ -283,9 +334,11 @@ environment.plugins.append('Provide', new webpack.ProvidePlugin({
   JS
 
   insert_into_file 'config/webpack/environment.js', content + "\n", before: "module.exports = environment"
+  say 'Add javascript done.'
 end
 
 def add_sidekiq
+  say 'Add sidekiq'
   environment "config.active_job.queue_adapter = :sidekiq"
 
   insert_into_file "config/routes.rb",
@@ -298,14 +351,19 @@ def add_sidekiq
     end
   RUBY
   insert_into_file "config/routes.rb", "#{content}\n\n", after: "Rails.application.routes.draw do\n"
+  say 'Add sidekiq done'
 end
 
 def add_whenever
+  say 'Add whenever'
   run "wheneverize ."
+  say 'Add whenever done'
 end
 
 def add_sitemap
+  say 'Add sitemap'
   rails_command "sitemap:install"
+  say 'Add sitemap done.'
 end
 
 def after_setup
