@@ -59,9 +59,6 @@ def apply_template!
   template "eslintrc.js", ".eslintrc.js"
   template "prettierrc.js", ".prettierrc.js"
   add_eslint_and_run_fix
-  add_sidekiq
-  add_whenever
-  add_sitemap
   add_javascript
 
   unless any_local_git_commits?
@@ -232,10 +229,13 @@ def setup_gems
   # run_with_clean_bundler_env "bundle install"
   run "bundle install"
   add_users
+  add_rucaptcha
+  add_sidekiq
+  add_whenever
+  add_sitemap
   add_rspec
   add_rswag
   add_bullet
-  add_rucaptcha
 end
 
 def add_users
@@ -318,11 +318,7 @@ end
 
 def add_javascript
   say 'Add javascript'
-  run "yarn add expose-loader jquery popper.js bootstrap data-confirm-modal local-time"
-
-  if rails_5?
-    run "yarn add turbolinks @rails/actioncable@pre @rails/actiontext@pre @rails/activestorage@pre @rails/ujs@pre"
-  end
+  run "yarn add expose-loader jquery @popperjs/core bootstrap data-confirm-modal local-time"
 
   content = <<-JS
 const webpack = require('webpack')
@@ -346,7 +342,8 @@ def add_sidekiq
                    before: "Rails.application.routes.draw do"
 
   content = <<-RUBY
-    authenticate :user, lambda { |u| u.admin? } do
+    # You must define a admin? method for user
+    authenticate :user, lambda { |u| u.respond_to?(:admin?) && u.admin? } do
       mount Sidekiq::Web => '/sidekiq'
     end
   RUBY
